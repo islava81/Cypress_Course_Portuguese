@@ -36,7 +36,7 @@ describe('Testes funcionais', () => {
         cy.request({
                 url: 'https://barrigarest.wcaquino.me/contas',
                 method: 'POST',
-                headers: {Authorization: `JWT ${token}`}, //it could be either "JWT" or "bearer"
+                //headers: {Authorization: `JWT ${token}`}, //it could be either "JWT" or "bearer"
                 body: {
                     nome: 'Conta via rest'
                 }
@@ -55,12 +55,12 @@ describe('Testes funcionais', () => {
     it('Deve alterar uma conta', () => {
         cy.getContaByName('Conta para alterar').then(contaId => {
             cy.request({
-            url: `https://barrigarest.wcaquino.me/contas/${contaId}`,
+            url: `/contas/${contaId}`,
             method: 'PUT',
             body: {
                 nome: 'Conta alterada via rest'
             },
-            headers: { Authorization: `JWT ${token}`}
+            //headers: { Authorization: `JWT ${token}`} //THIS HAS BEEN PUT IN PLACE FROM THE "commands.js" file
             }).as('response')
 
         
@@ -70,9 +70,9 @@ describe('Testes funcionais', () => {
 
     it('Should not create duplicate accounts', () => {
         cy.request({
-            url: 'https://barrigarest.wcaquino.me/contas',
+            url: '/contas',
             method: 'POST',
-            headers: {Authorization: `JWT ${token}`}, //it could be either "JWT" or "bearer"
+            //headers: {Authorization: `JWT ${token}`}, //it could be either "JWT" or "bearer"
             body: {
                 nome: 'Conta mesmo nome'
             },
@@ -95,8 +95,8 @@ describe('Testes funcionais', () => {
         
                 cy.request({
                     method: 'POST',
-                    url: 'https://barrigarest.wcaquino.me/transacoes',
-                    headers: {Authorization: `JWT ${token}`},
+                    url: '/transacoes',
+                    //headers: {Authorization: `JWT ${token}`},
                     body: {
                         conta_id: contaId,
                         data_pagamento: Cypress.moment().add({days: 1}).format('DD/MM/YYYY'),
@@ -115,11 +115,11 @@ describe('Testes funcionais', () => {
             
     })
 
-    it.only('Deve pegar o saldo', () => {
+    it('Deve pegar o saldo', () => {
         cy.request({
             method: 'GET',
-            url: 'https://barrigarest.wcaquino.me/saldo',
-            headers: {Authorization: `JWT ${token}`}
+            url: '/saldo',
+            //headers: {Authorization: `JWT ${token}`}
         }).then(res => {
             let saldoConta = null
             res.body.forEach(c => {
@@ -130,7 +130,7 @@ describe('Testes funcionais', () => {
 
         cy.request({
             method: 'GET',
-            url: 'https://barrigarest.wcaquino.me/transacoes',
+            url: '/transacoes',
             qs: {                                                   //"qs" stands for "query string"!!!
                 descricao: 'Movimentacao 1, calculo saldo'
             },
@@ -139,7 +139,7 @@ describe('Testes funcionais', () => {
              cy.request({
                 url: `https://barrigarest.wcaquino.me/transacoes/${res.body[0].id}`,
                 method: 'PUT',
-                headers: {Authorization: `JWT ${token}`},
+                //headers: {Authorization: `JWT ${token}`},
                 body: {
                     status: true,
                     //The below values are mandatory; if they are absent, the test executions will fail
@@ -156,8 +156,8 @@ describe('Testes funcionais', () => {
 
         cy.request({
             method: 'GET',
-            url: 'https://barrigarest.wcaquino.me/saldo',
-            headers: {Authorization: `JWT ${token}`}
+            url: '/saldo',
+            //headers: {Authorization: `JWT ${token}`}
         }).then(res => {
             let saldoConta = null
             res.body.forEach(c => {
@@ -170,6 +170,17 @@ describe('Testes funcionais', () => {
     })
 
     it('Deve remover uma movimentacao', () => {
-        
+        cy.request({
+            method: 'GET',
+            url: '/transacoes',
+            //headers: {Authorization: `JWT ${token}`},
+            qs: {descricao: 'Movimentacao para exclusao' }
+        }).then(res => {
+            cy.request( {
+                url: `/transacoes/${res.body[0].id}`,
+                method: 'DELETE',
+                headers: {Authorization: `JWT ${token}`},
+            }).its('status').should('be.equal', 204)
+        })
     })
 })

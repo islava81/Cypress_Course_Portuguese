@@ -33,10 +33,10 @@ Cypress.Commands.add('clickAlert', (locator, message) => {
         })
 })
 
-Cypress.Commands.add('login', (user, password) => {
+Cypress.Commands.add('login', (user, passwd) => {
     cy.visit('https://barrigareact.wcaquino.me/')
-        cy.get(loc.LOGIN.USER).type('madruga@chaves.com')
-        cy.get(loc.LOGIN.PASSWORD).type('aluguel')
+        cy.get(loc.LOGIN.USER).type(user)
+        cy.get(loc.LOGIN.PASSWORD).type(passwd)
         cy.get(loc.LOGIN.BTN_LOGIN).click()
 
         cy.get(loc.MESSAGE).should('contain', 'Bem vindo')
@@ -58,6 +58,7 @@ Cypress.Commands.add('getToken', (user,passwd)  => {
         }
     }).its('body.token').should('not.be.empty')
     .then(token => {
+        Cypress.env('token', token) //This is an environment variable which can be called upon and reused limitlessly
         return token
     })
 })
@@ -65,7 +66,7 @@ Cypress.Commands.add('getToken', (user,passwd)  => {
 Cypress.Commands.add('resetRest', () => {
     cy.getToken('madruga@chaves.com', 'aluguel').then(token => {
         cy.request({
-            url: 'https://barrigarest.wcaquino.me/reset',
+            url: '/reset',
             method: 'GET',
             headers: {Authorization: `JWT ${token}`}
         }).its('status').should('be.equal', 200)
@@ -77,7 +78,7 @@ Cypress.Commands.add('getContaByName', name => {
     cy.getToken('madruga@chaves.com', 'aluguel').then(token => {
         cy.request({
             method: 'GET',
-            url: 'https://barrigarest.wcaquino.me/contas',
+            url: '/contas',
             headers: { Authorization: `JWT ${token}`},
             qs: {
             nome: name
@@ -86,4 +87,16 @@ Cypress.Commands.add('getContaByName', name => {
             return res.body[0].id
         })
     })
+})
+
+//The below is to "overwrite" all the token calls for the headers in each individual test in the "backend.spec" file
+Cypress.Commands.overwrite('request', (originalFn, ...options) => {
+    if(options.length === 1) {
+        if(Cypress.env('token')) {
+            options[0].headers = {
+                Authorization: `JWT ${Cypress.env('token')}`
+            }
+        }
+    }
+    return originalFn(...options)
 })
